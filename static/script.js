@@ -6,82 +6,131 @@ document.addEventListener('DOMContentLoaded', () => {
     const playerDisplay = document.querySelector('#player')
     const winnerDisplay = document.querySelector('#winner')
 
-
-
     let board = initialState()
+    let user = null
 
     const reset = document.querySelector("#reset")
 
     reset.addEventListener('click', () => {
-        squares.forEach(square => {
+        user = null
+        squares.forEach((square, index) => {
             square.classList.remove('playerX', 'playerO')
 
         })
         winnerDisplay.innerHTML = ""
+        playerDisplay.innerHTML = ""
         board = initialState()
 
     })
-    let currentPlayer = null
-    console.log(currentPlayer)
+
 
     const playerX = document.querySelector("#playerX")
     const playerO = document.querySelector('#playerO')
 
     playerX.addEventListener('click', () => {
-        playerDisplay.innerHTML = "Player X's turn"
-        currentPlayer = X
+        user = X
         startGame()
     })
     playerO.addEventListener('click', () => {
-        playerDisplay.innerHTML = "Player O's turn"
-        currentPlayer = O
+        user = O
         startGame()
     })
 
     function startGame() {
-        squares.forEach(square => {
-            square.addEventListener('click', clickOutcome)
-        })
+        if (player(board) === user) {
+            squares.forEach(square => {
+                square.addEventListener('click', clickOutcome)
+            })
+            console.log('game started user')
+        }
+
+        else {
+            const index = makeAIMove(board)
+            squares.forEach((square, idx) => {
+                if (idx !== index) {
+                    square.addEventListener('click', clickOutcome)
+                }
+            })
+            console.log('game started AI')
+        }
+
+    }
+
+    function makeAIMove(board) {
+        let index;
+        if (user !== null) {
+            let move = minimax(board)
+            const [i, j] = move
+            index = i * 3 + j
+            let currentPlayer = player(board)
+            board[i][j] = currentPlayer
+            squares[index].classList.add(`player${currentPlayer}`)
+            squares[index].removeEventListener('click', clickOutcome)
+
+            if (winner(board)) {
+                winnerDisplay.innerHTML = `Player ${winner(board)} won`
+                user = null
+            }
+            if (boardFull(board) && utility(board) === 0) {
+                winnerDisplay.innerHTML = "It's a tie"
+                squares.forEach(square => {
+                    square.removeEventListener('click', clickOutcome)
+                })
+                user = null
+            }
+        }
+        return index
+
     }
 
     function clickOutcome(e) {
+        if (user === null) {
+            alert("Please select a player")
+        }
         const squareArray = Array.from(squares)
         const index = squareArray.indexOf(e.target)
         const row = Math.floor(index / 3)
         const col = index % 3
+        squares[index].removeEventListener('click', clickOutcome)
 
-        playerDisplay.innerHTML = `Player ${currentPlayer}'s turn`
+        squares[index].classList.add(`player${user}`)
+        board[row][col] = user
+        if (winner(board)) {
+            winnerDisplay.innerHTML = `Player ${winner(board)} won`
+            user = null
+        }
 
+        if (boardFull(board) && utility(board) === 0) {
+            winnerDisplay.innerHTML = "It's a tie"
+            squares.forEach(square => {
+                square.removeEventListener('click', clickOutcome)
+            })
+            user = null
+        }
+        makeAIMove(board)
 
-        if (currentPlayer === X) {
-            squares[index].classList.add('playerX')
-            playerDisplay.innerHTML = `Player O's turn`
-            board[row][col] = X
-            let whowon = utility(board)
-            if (whowon) {
-                winnerDisplay.innerHTML = "Player X won!"
-                squares.forEach(square => {
-                    square.removeEventListener('click', clickOutcome)
-                })
+    }
+
+    // Returns which player who has the next turn on a board
+    function player(board) {
+        let countX = 0
+        let countO = 0
+
+        for (let i = 0; i < board.length; i++) {
+            for (let j = 0; j < board[0].length; j++) {
+                if (board[i][j] === X) {
+                    countX += 1
+                } else if (board[i][j] === O) {
+                    countO += 1
+                }
             }
-            currentPlayer = O
+        }
+
+        if (countO < countX) {
+            return O
         } else {
-            squares[index].classList.add('playerO')
-            playerDisplay.innerHTML = `Player X's turn`
-            board[row][col] = O
-            let whowon = utility(board)
-            if (whowon) {
-                winnerDisplay.innerHTML = "Player O won!"
-                squares.forEach(square => {
-                    square.removeEventListener('click', clickOutcome)
-                })
-            }
-            currentPlayer = 'X'
+            return X
         }
-        if (terminal(board)) {
-            playerDisplay.innerHTML = ""
-        }
-
     }
 
     // Returns 1 if X has won the game, -1 if O has won, 0 otherwise
@@ -169,4 +218,118 @@ document.addEventListener('DOMContentLoaded', () => {
             ]
         return board
     }
+
+    // Returns a set of all possible actions (i, j) available on the board.
+    function actions(board) {
+        const possibleActions = new Set()
+
+        for (let i = 0; i < board.length; i++) {
+            for (let j = 0; j < board[0].length; j++) {
+                if (board[i][j] === null) {
+                    possibleActions.add([i, j])
+                }
+            }
+        }
+        return possibleActions
+    }
+
+    // Returns the board that results from making move (i, j) on the board.
+    function result(board, action) {
+        let validActions = actions(board)
+        // if (!validActions.has(action)) {
+        //     throw new Error("Invalid action")
+        // }
+
+        let boardCopy = JSON.parse(JSON.stringify(board))
+
+        let [i, j] = action
+
+
+        let currentPlayer = player(board)
+        boardCopy[i][j] = currentPlayer
+
+        return boardCopy
+
+    }
+
+    // Returns the optimal action for the current player on the board
+    function minimax(board) {
+        if (terminal(board)) {
+            return null
+        }
+        let currentPlayer = player(board)
+        let action
+
+        if (currentPlayer === X) {
+
+            const maxVal = maxValue(board)
+            action = maxVal[1]
+        }
+        else {
+            const minVal = minValue(board)
+            action = minVal[1]
+        }
+        return action
+    }
+
+    function maxValue(board, alpha, beta) {
+        if (terminal(board)) {
+            return [utility(board), null]
+        }
+        let highestValue = -Infinity
+
+        let optimalActions = []
+
+        // actions(board).forEach(action => {
+        for (const action of actions(board)) {
+            let nextBoard = result(board, action)
+            const minVal = minValue(nextBoard, alpha, beta)
+            if (minVal[0] === highestValue) {
+                optimalActions.push(action)
+            }
+            if (minVal[0] > highestValue) {
+                highestValue = minVal[0]
+                optimalActions = [action]
+            }
+
+            // Alpha-Beta Pruning
+            alpha = Math.max(alpha, highestValue)
+            if (beta <= alpha) {
+                break
+            }
+        }
+
+        return [highestValue, optimalActions[Math.floor(Math.random() * optimalActions.length)]]
+    }
+
+    function minValue(board, alpha, beta) {
+        if (terminal(board)) {
+            return [utility(board), null]
+        }
+
+        let lowestValue = Infinity
+
+        let optimalActions = []
+
+        // actions(board).forEach(action => {
+        for (const action of actions(board)) {
+            let nextBoard = result(board, action)
+            const maxVal = maxValue(nextBoard, alpha, beta)
+            if (maxVal[0] === lowestValue) {
+                optimalActions.push(action)
+            }
+            if (maxVal[0] < lowestValue) {
+                lowestValue = maxVal[0]
+                optimalActions = [action]
+            }
+
+            // Alpha-Beta Pruning
+            beta = Math.min(beta, lowestValue)
+            if (beta <= alpha) {
+                break
+            }
+        }
+        return [lowestValue, optimalActions[Math.floor(Math.random() * optimalActions.length)]]
+    }
 })
+
