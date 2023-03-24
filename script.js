@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         })
         winnerDisplay.innerHTML = ""
-        playerDisplay.innerHTML = ""
+        playerDisplay.innerHTML = "Choose a player"
         board = initialState()
 
     })
@@ -29,11 +29,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     playerX.addEventListener('click', () => {
         user = X
+        playerDisplay.textContent = "Your turn"
         startGame()
     })
-    playerO.addEventListener('click', () => {
+    playerO.addEventListener('click', (e) => {
+        playerDisplay.textContent = "Computer thinking..."
         user = O
-        startGame()
+
+        // This setTimeout here is a hack so that "Computer thinking..." will render before minimax finish running
+        setTimeout(() => {
+            startGame()
+        }, 50)
     })
 
     function startGame() {
@@ -41,7 +47,6 @@ document.addEventListener('DOMContentLoaded', () => {
             squares.forEach(square => {
                 square.addEventListener('click', clickOutcome)
             })
-            console.log('game started user')
         }
 
         else {
@@ -51,33 +56,41 @@ document.addEventListener('DOMContentLoaded', () => {
                     square.addEventListener('click', clickOutcome)
                 }
             })
-            console.log('game started AI')
         }
 
     }
 
     function makeAIMove(board) {
         let index;
+
         if (user !== null) {
+            playerDisplay.innerHTML = "Computer thinking..."
             let move = minimax(board)
+
             const [i, j] = move
             index = i * 3 + j
             let currentPlayer = player(board)
             board[i][j] = currentPlayer
-            squares[index].classList.add(`player${currentPlayer}`)
+            setTimeout(() => {
+
+                squares[index].classList.add(`player${currentPlayer}`)
+                if (winner(board)) {
+                    playerDisplay.innerHTML = `Player ${winner(board)} won`
+                    user = null
+                }
+                else if (boardFull(board) && utility(board) === 0) {
+                    playerDisplay.innerHTML = "It's a tie"
+                    squares.forEach(square => {
+                        square.removeEventListener('click', clickOutcome)
+                    })
+                    user = null
+                }
+                else {
+                    playerDisplay.innerHTML = "Your turn"
+                }
+            }, 2000)
             squares[index].removeEventListener('click', clickOutcome)
 
-            if (winner(board)) {
-                winnerDisplay.innerHTML = `Player ${winner(board)} won`
-                user = null
-            }
-            if (boardFull(board) && utility(board) === 0) {
-                winnerDisplay.innerHTML = "It's a tie"
-                squares.forEach(square => {
-                    square.removeEventListener('click', clickOutcome)
-                })
-                user = null
-            }
         }
         return index
 
@@ -96,12 +109,12 @@ document.addEventListener('DOMContentLoaded', () => {
         squares[index].classList.add(`player${user}`)
         board[row][col] = user
         if (winner(board)) {
-            winnerDisplay.innerHTML = `Player ${winner(board)} won`
+            playerDisplay.innerHTML = `Player ${winner(board)} won`
             user = null
         }
 
         if (boardFull(board) && utility(board) === 0) {
-            winnerDisplay.innerHTML = "It's a tie"
+            playerDisplay.innerHTML = "It's a tie"
             squares.forEach(square => {
                 square.removeEventListener('click', clickOutcome)
             })
@@ -235,10 +248,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Returns the board that results from making move (i, j) on the board.
     function result(board, action) {
-        let validActions = actions(board)
-        // if (!validActions.has(action)) {
-        //     throw new Error("Invalid action")
-        // }
 
         let boardCopy = JSON.parse(JSON.stringify(board))
 
@@ -280,7 +289,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let optimalActions = []
 
-        // actions(board).forEach(action => {
         for (const action of actions(board)) {
             let nextBoard = result(board, action)
             const minVal = minValue(nextBoard, alpha, beta)
@@ -311,7 +319,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let optimalActions = []
 
-        // actions(board).forEach(action => {
         for (const action of actions(board)) {
             let nextBoard = result(board, action)
             const maxVal = maxValue(nextBoard, alpha, beta)
