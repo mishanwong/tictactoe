@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function clickOutcome(e) {
         if (user === null) {
-            alert("Please select a player")
+            alert("Please resert or select a player")
         }
         const squareArray = Array.from(squares)
         const index = squareArray.indexOf(e.target)
