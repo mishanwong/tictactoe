@@ -1,17 +1,31 @@
-.grid {
+#container {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    width: 610px;
-    height: 610px;
-    background-color: black;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 90vh;
+}
+
+#header {
+    height: 20vh;
+    text-align: center;
+}
+
+.grid {
+    display: grid;
+    grid-template-rows: repeat(3, 1fr);
+    grid-template-columns: repeat(3, 1fr);
+    width: 70vh;
+    height: 70vh;
 }
 
 .grid div {
-    width: 200px;
-    height: 200px;
     background-color: white;
-    margin-bottom: 5px;
+    border: 2px solid black;
+    font-size: 3em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .playerX {

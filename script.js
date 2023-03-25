@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const squares = document.querySelectorAll('.grid div')
     const playerDisplay = document.querySelector('#player')
-    const winnerDisplay = document.querySelector('#winner')
 
     let board = initialState()
     let user = null
@@ -17,7 +16,6 @@ document.addEventListener('DOMContentLoaded', () => {
             square.classList.remove('playerX', 'playerO')
 
         })
-        winnerDisplay.innerHTML = ""
         playerDisplay.innerHTML = "Choose a player"
         board = initialState()
 
