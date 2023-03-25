@@ -1,5 +1,4 @@
-# Try it out here
-https://mishanwong.github.io/tictactoe/
+Try it out here: https://mishanwong.github.io/tictactoe/
 
 *Currently not optimized for mobile*
 
