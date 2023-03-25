@@ -1,7 +1,5 @@
 Try it out here: https://mishanwong.github.io/tictactoe/
 
-*Currently not optimized for mobile*
-
 # Description
 This is a program where user can play the game of tic-tac-toe against an AI.
 
